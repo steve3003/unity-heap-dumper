@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
     public class TypeDataFactory : IFactory<ITypeData, Type>
     {

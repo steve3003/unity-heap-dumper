@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
-    public interface IHeapDump
+    public interface IHeapDumper
     {
         void Dump(string path);
     }

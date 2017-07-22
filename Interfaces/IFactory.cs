@@ -1,5 +1,5 @@
 ﻿
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
     public interface IFactory<T>
     {

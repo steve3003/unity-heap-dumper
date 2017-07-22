@@ -5,40 +5,28 @@ using System.Text;
 
 namespace UnityHeapDumper
 {
-    public class InstanceData : IInstanceData
+    public class StringInstanceData : IInstanceData
     {
         private static readonly IFieldData[] emptyFields = new IFieldData[0];
-
-        private object obj;
         private int id;
-        private int size;
+        private string str;
         private ITypeData typeData;
-        private IList<IFieldData> fields;
+        private int size;
 
         void IInstanceData.Init(IDumpContext dumpContext, object obj, int id)
         {
-            this.obj = obj;
+            str = (string)obj;
             this.id = id;
 
-            size = 0;
-            var type = obj.GetType();
             var typeDataFactory = dumpContext.TypeDataFactory;
-            typeData = typeDataFactory.Create(type);
-            size += typeData.StaticSize;
+            typeData = typeDataFactory.Create(typeof(string));
 
-            if (typeData.IsPureValueType)
+            size = 3 * IntPtr.Size + 2;
+            size += str.Length * sizeof(char);
+            int pad = size % IntPtr.Size;
+            if (pad != 0)
             {
-                fields = emptyFields;
-                return;
-            }
-
-            var fieldDataFactory = dumpContext.FieldDataFactory;
-            var instanceFields = typeData.InstanceFields;
-            fields = new List<IFieldData>(instanceFields.Count);
-            foreach (var fieldInfo in instanceFields)
-            {
-                var fieldData = fieldDataFactory.Create(fieldInfo, obj);
-                fields.Add(fieldData);
+                size += IntPtr.Size - pad;
             }
         }
 
@@ -70,7 +58,7 @@ namespace UnityHeapDumper
         {
             get
             {
-                return fields;
+                return emptyFields;
             }
         }
 
@@ -78,7 +66,7 @@ namespace UnityHeapDumper
         {
             get
             {
-                return obj;
+                return str;
             }
         }
     }

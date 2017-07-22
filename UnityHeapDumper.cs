@@ -8,22 +8,22 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
-    public class UnityHeapDump : IHeapDump, IDumpContext
+    public class UnityHeapDumper : IHeapDumper, IDumpContext
     {
         [MenuItem("Tools/Dump")]
         private static void Dump()
         {
-            IHeapDump dumper = new UnityHeapDump();
+            IHeapDumper dumper = new UnityHeapDumper();
             dumper.Dump(@"C:\Users\stefa\Downloads\heap.xml");
         }
 
         private IFactory<ITypeData, Type> typeDataFactory;
         private IFactory<IInstanceData, object> instanceDataFactory;
-        private IFactory<IFieldData, FieldInfo, object> fieldDataFactory;
+        private IFieldDataFactory fieldDataFactory;
 
-        public UnityHeapDump()
+        public UnityHeapDumper()
         {
             typeDataFactory = new TypeDataFactory(this);
             instanceDataFactory = new InstanceDataFactory(this);
@@ -46,7 +46,7 @@ namespace UnityHeapDump
             }
         }
 
-        IFactory<IFieldData, FieldInfo, object> IDumpContext.FieldDataFactory
+        IFieldDataFactory IDumpContext.FieldDataFactory
         {
             get
             {
@@ -54,7 +54,7 @@ namespace UnityHeapDump
             }
         }
 
-        void IHeapDump.Dump(string path)
+        void IHeapDumper.Dump(string path)
         {
             List<IFieldData> staticFields = GetStaticFields();
 
@@ -63,8 +63,7 @@ namespace UnityHeapDump
             HashSet<int> seenInstances = new HashSet<int>();
             foreach (var staticField in staticFields)
             {
-                var fieldInfo = staticField.FieldInfo;
-                Debug.LogFormat("type={0} field={1} size={2}", fieldInfo.DeclaringType.Name, fieldInfo.Name, staticField.InstanceData.Size);
+                Debug.LogFormat("type={0} field={1} size={2}", staticField.DeclaringType, staticField.Name, staticField.InstanceData.Size);
                 seenInstances.Clear();
                 PrintField(builder, staticField, seenInstances);
             }
@@ -74,10 +73,13 @@ namespace UnityHeapDump
 
         private void PrintField(StringBuilder builder, IFieldData fieldData, HashSet<int> seenInstances)
         {
-            var fieldInfo = fieldData.FieldInfo;
             builder.Append("<field>");
-            builder.AppendFormat("<declaring_type>{0}</declaring_type>", SecurityElement.Escape(fieldInfo.DeclaringType.Name));
-            builder.AppendFormat("<name>{0}</name>", SecurityElement.Escape(fieldInfo.Name));
+            var declaringType = fieldData.DeclaringType;
+            if (!string.IsNullOrEmpty(declaringType))
+            {
+                builder.AppendFormat("<declaring_type>{0}</declaring_type>", SecurityElement.Escape(declaringType));
+            }
+            builder.AppendFormat("<name>{0}</name>", SecurityElement.Escape(fieldData.Name));
             PrintInstance(builder, fieldData.InstanceData, seenInstances);
             builder.Append("</field>");
         }
@@ -88,26 +90,31 @@ namespace UnityHeapDump
             var id = instanceData.Id;
             builder.AppendFormat("<id>{0}</id>", id);
             builder.AppendFormat("<type>{0}</type>", instanceData.TypeData == null ? "null" : SecurityElement.Escape(instanceData.TypeData.Type.Name));
-            builder.Append("<fields>");
-            if (!seenInstances.Contains(id))
+            var fields = instanceData.Fields;
+            if (fields.Count > 0)
             {
-                seenInstances.Add(id);
-                foreach (var fieldData in instanceData.Fields)
+                if (!seenInstances.Contains(id))
                 {
-                    PrintField(builder, fieldData, seenInstances);
+                    seenInstances.Add(id);
+
+                    builder.Append("<fields>");
+                    foreach (var fieldData in fields)
+                    {
+                        PrintField(builder, fieldData, seenInstances);
+                    }
+                    builder.Append("</fields>");
+                }
+                else
+                {
+                    builder.Append("<recursion/>");
                 }
             }
-            else
-            {
-                builder.Append("<recursion/>");
-            }
-            builder.Append("</fields>");
             builder.Append("</instance>");
         }
 
         private List<IFieldData> GetStaticFields()
         {
-            var thisNamespace = typeof(UnityHeapDump).Namespace;
+            var thisNamespace = typeof(UnityHeapDumper).Namespace;
             var staticFields = new List<IFieldData>();
             var assemblies = GetAppAssemblies();
             foreach (var assembly in assemblies)

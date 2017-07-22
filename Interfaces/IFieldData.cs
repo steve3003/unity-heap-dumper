@@ -4,11 +4,12 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
     public interface IFieldData
     {
-        FieldInfo FieldInfo { get; }
+        string Name { get; }
+        string DeclaringType { get; }
         IInstanceData InstanceData { get; }
     }
 }

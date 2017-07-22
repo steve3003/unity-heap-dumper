@@ -4,12 +4,12 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
     public interface IDumpContext
     {
         IFactory<ITypeData, Type> TypeDataFactory { get; }
         IFactory<IInstanceData, object> InstanceDataFactory { get; }
-        IFactory<IFieldData, FieldInfo, object> FieldDataFactory { get; }
+        IFieldDataFactory FieldDataFactory { get; }
     }
 }

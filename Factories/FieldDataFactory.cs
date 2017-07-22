@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
-    public class FieldDataFactory : IFactory<IFieldData, FieldInfo, object>
+    public class FieldDataFactory : IFieldDataFactory
     {
         private IDumpContext dumpContext;
 
@@ -16,6 +16,11 @@ namespace UnityHeapDump
         IFieldData IFactory<IFieldData, FieldInfo, object>.Create(FieldInfo fieldInfo, object parent)
         {
             return new FieldData(dumpContext, fieldInfo, parent);
+        }
+
+        IFieldData IFieldDataFactory.CreateArrayField(Array parent, int index)
+        {
+            return new ArrayFieldData(dumpContext, parent, index);
         }
     }
 }

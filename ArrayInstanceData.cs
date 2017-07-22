@@ -1,44 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace UnityHeapDumper
 {
-    public class InstanceData : IInstanceData
+    public class ArrayInstanceData : IInstanceData
     {
-        private static readonly IFieldData[] emptyFields = new IFieldData[0];
-
-        private object obj;
+        private List<IFieldData> elements;
         private int id;
-        private int size;
+        private Array array;
         private ITypeData typeData;
-        private IList<IFieldData> fields;
+        private int size;
 
         void IInstanceData.Init(IDumpContext dumpContext, object obj, int id)
         {
-            this.obj = obj;
+            array = (Array)obj;
             this.id = id;
 
-            size = 0;
-            var type = obj.GetType();
             var typeDataFactory = dumpContext.TypeDataFactory;
+            var type = obj.GetType();
             typeData = typeDataFactory.Create(type);
-            size += typeData.StaticSize;
-
-            if (typeData.IsPureValueType)
-            {
-                fields = emptyFields;
-                return;
-            }
 
             var fieldDataFactory = dumpContext.FieldDataFactory;
-            var instanceFields = typeData.InstanceFields;
-            fields = new List<IFieldData>(instanceFields.Count);
-            foreach (var fieldInfo in instanceFields)
+            var arrayLength = array.Length;
+            elements = new List<IFieldData>(arrayLength);
+            for (int i = 0; i < arrayLength; ++i)
             {
-                var fieldData = fieldDataFactory.Create(fieldInfo, obj);
-                fields.Add(fieldData);
+                var fieldData = fieldDataFactory.CreateArrayField(array, i);
+                elements.Add(fieldData);
             }
         }
 
@@ -70,7 +58,7 @@ namespace UnityHeapDumper
         {
             get
             {
-                return fields;
+                return elements;
             }
         }
 
@@ -78,7 +66,7 @@ namespace UnityHeapDumper
         {
             get
             {
-                return obj;
+                return array;
             }
         }
     }

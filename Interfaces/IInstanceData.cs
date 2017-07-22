@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
     public interface IInstanceData
     {
@@ -12,5 +12,6 @@ namespace UnityHeapDump
         int Size { get; }
         ITypeData TypeData { get; }
         IList<IFieldData> Fields { get; }
+        void Init(IDumpContext dumpContext, object obj, int id);
     }
 }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
     public interface ITypeData
     {
@@ -12,6 +12,7 @@ namespace UnityHeapDump
         int Size { get; }
         int StaticSize { get; }
         IList<IFieldData> StaticFields { get; }
-        IList<FieldInfo> DynamicFields { get; }
+        IList<FieldInfo> InstanceFields { get; }
+        bool IsPureValueType { get; }
     }
 }

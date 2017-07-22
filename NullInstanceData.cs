@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
     public class NullInstanceData : IInstanceData
     {
-        private IFieldData[] emptyFileds = new IFieldData[0];
+        private static readonly IFieldData[] emptyFields = new IFieldData[0];
 
         int IInstanceData.Id
         {
@@ -37,7 +37,7 @@ namespace UnityHeapDump
         {
             get
             {
-                return emptyFileds;
+                return emptyFields;
             }
         }
 
@@ -47,6 +47,10 @@ namespace UnityHeapDump
             {
                 return null;
             }
+        }
+
+        void IInstanceData.Init(IDumpContext dumpContext, object obj, int id)
+        {
         }
     }
 }

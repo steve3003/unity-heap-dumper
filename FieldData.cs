@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
     public class FieldData : IFieldData
     {
@@ -34,19 +34,27 @@ namespace UnityHeapDump
             }
         }
 
-        FieldInfo IFieldData.FieldInfo
-        {
-            get
-            {
-                return fieldInfo;
-            }
-        }
-
         IInstanceData IFieldData.InstanceData
         {
             get
             {
                 return instanceData;
+            }
+        }
+
+        string IFieldData.Name
+        {
+            get
+            {
+                return fieldInfo.Name;
+            }
+        }
+
+        string IFieldData.DeclaringType
+        {
+            get
+            {
+                return fieldInfo.DeclaringType.Name;
             }
         }
     }

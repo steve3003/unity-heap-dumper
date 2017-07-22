@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace UnityHeapDump
+namespace UnityHeapDumper
 {
     public class TypeData : ITypeData
     {
@@ -12,7 +12,8 @@ namespace UnityHeapDump
         private int size;
         private int staticSize;
         private List<IFieldData> staticFields;
-        private List<FieldInfo> dynamicFields;
+        private List<FieldInfo> instanceFields;
+        private bool isPureValueType;
 
         public void Init(IDumpContext dumpContext, Type type)
         {
@@ -22,7 +23,9 @@ namespace UnityHeapDump
             staticSize = 0;
 
             var typeDataFactory = dumpContext.TypeDataFactory;
-            dynamicFields = GetDynamicFields(typeDataFactory);
+            instanceFields = GetInstanceFields(typeDataFactory);
+
+            isPureValueType = IsPureValueType(typeDataFactory);
 
             var fieldDataFactory = dumpContext.FieldDataFactory;
             staticFields = GetStaticFields(fieldDataFactory);
@@ -40,20 +43,45 @@ namespace UnityHeapDump
             return staticFields;
         }
 
-        private List<FieldInfo> GetDynamicFields(IFactory<ITypeData, Type> typeDataFactory)
+        private List<FieldInfo> GetInstanceFields(IFactory<ITypeData, Type> typeDataFactory)
         {
-            var dynamicFieldInfos = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            var dynamicFields = new List<FieldInfo>(dynamicFieldInfos.Length);
-            dynamicFields.AddRange(dynamicFieldInfos);
+            var instanceFieldInfos = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var instanceFields = new List<FieldInfo>(instanceFieldInfos.Length);
+            instanceFields.AddRange(instanceFieldInfos);
 
             var baseType = type.BaseType;
             if (baseType != null)
             {
                 var baseTypeData = typeDataFactory.Create(baseType);
-                dynamicFields.AddRange(baseTypeData.DynamicFields);
+                instanceFields.AddRange(baseTypeData.InstanceFields);
             }
 
-            return dynamicFields;
+            return instanceFields;
+        }
+
+        private bool IsPureValueType(IFactory<ITypeData, Type> typeDataFactory)
+        {
+            if (!type.IsValueType)
+            {
+                return false;
+            }
+
+            if (type.IsPrimitive)
+            {
+                return true;
+            }
+
+            foreach (var instanceField in instanceFields)
+            {
+                var fieldType = instanceField.FieldType;
+                var fieldTypeData = typeDataFactory.Create(fieldType);
+                if (!fieldTypeData.IsPureValueType)
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         Type ITypeData.Type
@@ -88,11 +116,19 @@ namespace UnityHeapDump
             }
         }
 
-        IList<FieldInfo> ITypeData.DynamicFields
+        IList<FieldInfo> ITypeData.InstanceFields
         {
             get
             {
-                return dynamicFields;
+                return instanceFields;
+            }
+        }
+
+        bool ITypeData.IsPureValueType
+        {
+            get
+            {
+                return isPureValueType;
             }
         }
     }
