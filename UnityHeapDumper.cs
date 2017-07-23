@@ -63,7 +63,7 @@ namespace UnityHeapDumper
             HashSet<int> seenInstances = new HashSet<int>();
             foreach (var staticField in staticFields)
             {
-                Debug.LogFormat("type={0} field={1} size={2}", staticField.DeclaringType, staticField.Name, staticField.InstanceData.Size);
+                Debug.LogFormat("type={0} field={1} size={2}", staticField.DeclaringType, staticField.Name, staticField.InstanceData.GetSize());
                 seenInstances.Clear();
                 PrintField(builder, staticField, seenInstances);
             }
@@ -90,6 +90,7 @@ namespace UnityHeapDumper
             var id = instanceData.Id;
             builder.AppendFormat("<id>{0}</id>", id);
             builder.AppendFormat("<type>{0}</type>", instanceData.TypeData == null ? "null" : SecurityElement.Escape(instanceData.TypeData.Type.Name));
+            builder.AppendFormat("<size>{0}</size>", instanceData.GetSize(seenInstances));
             var fields = instanceData.Fields;
             if (fields.Count > 0)
             {

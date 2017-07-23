@@ -9,16 +9,20 @@ namespace UnityHeapDumper
         private int id;
         private Array array;
         private ITypeData typeData;
-        private int size;
+        private int typeSize;
+        private HashSet<int> seenInstances;
 
         void IInstanceData.Init(IDumpContext dumpContext, object obj, int id)
         {
+            seenInstances = new HashSet<int>();
+
             array = (Array)obj;
             this.id = id;
 
             var typeDataFactory = dumpContext.TypeDataFactory;
             var type = obj.GetType();
             typeData = typeDataFactory.Create(type);
+            typeSize = typeData.Size;
 
             var fieldDataFactory = dumpContext.FieldDataFactory;
             var arrayLength = array.Length;
@@ -38,12 +42,29 @@ namespace UnityHeapDumper
             }
         }
 
-        int IInstanceData.Size
+        int IInstanceData.GetSize(ICollection<int> seenInstances)
         {
-            get
+            this.seenInstances.Clear();
+            if (seenInstances != null)
             {
-                return size;
+                if (seenInstances.Contains(id))
+                {
+                    return 0;
+                }
+
+                this.seenInstances.UnionWith(seenInstances);
             }
+            this.seenInstances.Add(id);
+
+            var size = typeSize;
+
+            foreach (var field in elements)
+            {
+                var fieldInstanceData = field.InstanceData;
+                size += fieldInstanceData.GetSize(this.seenInstances);
+            }
+
+            return size;
         }
 
         ITypeData IInstanceData.TypeData

@@ -17,12 +17,9 @@ namespace UnityHeapDumper
             }
         }
 
-        int IInstanceData.Size
+        int IInstanceData.GetSize(ICollection<int> seenInstances)
         {
-            get
-            {
-                return 0;
-            }
+            return 0;
         }
 
         ITypeData IInstanceData.TypeData

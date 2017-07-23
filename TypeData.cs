@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace UnityHeapDumper
@@ -10,7 +11,6 @@ namespace UnityHeapDumper
     {
         private Type type;
         private int size;
-        private int staticSize;
         private List<IFieldData> staticFields;
         private List<FieldInfo> instanceFields;
         private bool isPureValueType;
@@ -20,12 +20,23 @@ namespace UnityHeapDumper
             this.type = type;
 
             size = 0;
-            staticSize = 0;
 
             var typeDataFactory = dumpContext.TypeDataFactory;
             instanceFields = GetInstanceFields(typeDataFactory);
 
             isPureValueType = IsPureValueType(typeDataFactory);
+            if (isPureValueType)
+            {
+                if (type.IsEnum)
+                {
+                    Type uderlyingType = Enum.GetUnderlyingType(type);
+                    size = Marshal.SizeOf(uderlyingType);
+                }
+                else
+                {
+                    size = Marshal.SizeOf(type);
+                }
+            }
 
             var fieldDataFactory = dumpContext.FieldDataFactory;
             staticFields = GetStaticFields(fieldDataFactory);
@@ -97,14 +108,6 @@ namespace UnityHeapDumper
             get
             {
                 return size;
-            }
-        }
-
-        int ITypeData.StaticSize
-        {
-            get
-            {
-                return staticSize;
             }
         }
 

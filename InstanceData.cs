@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace UnityHeapDumper
 {
@@ -11,20 +8,22 @@ namespace UnityHeapDumper
 
         private object obj;
         private int id;
-        private int size;
+        private int typeSize;
         private ITypeData typeData;
         private IList<IFieldData> fields;
+        private HashSet<int> seenInstances;
 
         void IInstanceData.Init(IDumpContext dumpContext, object obj, int id)
         {
+            seenInstances = new HashSet<int>();
+
             this.obj = obj;
             this.id = id;
 
-            size = 0;
             var type = obj.GetType();
             var typeDataFactory = dumpContext.TypeDataFactory;
             typeData = typeDataFactory.Create(type);
-            size += typeData.StaticSize;
+            typeSize = typeData.Size;
 
             if (typeData.IsPureValueType)
             {
@@ -50,12 +49,29 @@ namespace UnityHeapDumper
             }
         }
 
-        int IInstanceData.Size
+        int IInstanceData.GetSize(ICollection<int> seenInstances)
         {
-            get
+            this.seenInstances.Clear();
+            if (seenInstances != null)
             {
-                return size;
+                if (seenInstances.Contains(id))
+                {
+                    return 0;
+                }
+
+                this.seenInstances.UnionWith(seenInstances);
             }
+            this.seenInstances.Add(id);
+
+            var size = typeSize;
+
+            foreach (var field in fields)
+            {
+                var fieldInstanceData = field.InstanceData;
+                size += fieldInstanceData.GetSize(this.seenInstances);
+            }
+
+            return size;
         }
 
         ITypeData IInstanceData.TypeData

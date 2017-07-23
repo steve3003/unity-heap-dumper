@@ -10,7 +10,6 @@ namespace UnityHeapDumper
     {
         Type Type { get; }
         int Size { get; }
-        int StaticSize { get; }
         IList<IFieldData> StaticFields { get; }
         IList<FieldInfo> InstanceFields { get; }
         bool IsPureValueType { get; }

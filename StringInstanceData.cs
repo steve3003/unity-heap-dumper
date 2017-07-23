@@ -21,13 +21,7 @@ namespace UnityHeapDumper
             var typeDataFactory = dumpContext.TypeDataFactory;
             typeData = typeDataFactory.Create(typeof(string));
 
-            size = 3 * IntPtr.Size + 2;
-            size += str.Length * sizeof(char);
-            int pad = size % IntPtr.Size;
-            if (pad != 0)
-            {
-                size += IntPtr.Size - pad;
-            }
+            size = str.Length * sizeof(char);
         }
 
         int IInstanceData.Id
@@ -38,12 +32,9 @@ namespace UnityHeapDumper
             }
         }
 
-        int IInstanceData.Size
+        int IInstanceData.GetSize(ICollection<int> seenInstances)
         {
-            get
-            {
-                return size;
-            }
+            return size;
         }
 
         ITypeData IInstanceData.TypeData
